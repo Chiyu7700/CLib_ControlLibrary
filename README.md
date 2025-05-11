@@ -64,8 +64,14 @@ an offset/NPO group above it.
 > 
 . 
 
+<br>
+</div>
 
-> You can alternate between the two menus using the buttons at the two buttons at the top
+* Menu Buttons
+ 
+<div align="center">
+  
+> You can alternate between the two menus using the buttons at the top of the right Panel
 > > 
 . 
 ![CLib_Swapmenus](https://github.com/user-attachments/assets/6e73ac19-9971-4d49-b5f8-6157f9b8992c)
