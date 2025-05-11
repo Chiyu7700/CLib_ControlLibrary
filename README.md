@@ -76,6 +76,29 @@ an offset/NPO group above it.
 . 
 ![CLib_Swapmenus](https://github.com/user-attachments/assets/6e73ac19-9971-4d49-b5f8-6157f9b8992c)
 
+<br>
+</div>
+
+* Storing and Deleting Controls
+ 
+<div align="center">
+  
+> Select a control you want to save and click *Store Control* , to delete a stored Control simply right click on it and click Delete
+> > 
+. 
+![storing control](https://github.com/user-attachments/assets/130e56e5-e25c-46c1-8b0d-540861359f01)
+
+<br>
+</div>
+
+* Recreating the Curve
+ 
+<div align="center">
+  
+> Typically the curve is created at the location of a seected object. If no object is selected the Curve is created at world origin (0, 0 , 0)
+> > 
+. 
+![creating_control](https://github.com/user-attachments/assets/0e2a6723-b05f-4145-8ebc-1a100d2add3c)
 
 
 
