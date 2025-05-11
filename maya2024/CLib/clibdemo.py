@@ -2,6 +2,7 @@ import os
 import json
 import functools
 from PySide2.QtCore import *
+from PySide2 import QtWidgets, QtCore
 from PySide2.QtWidgets import *
 from PySide2.QtUiTools import QUiLoader
 import PySide2.QtWidgets as QT
@@ -11,10 +12,6 @@ from shiboken2 import wrapInstance
 from maya import OpenMayaUI as omui
 
 
-#main_window_method to parent UI
-def get_maya_main_window():
-    main_window = omui.MQtUtil.mainWindow()
-    return wrapInstance(int(main_window), QWidget)
 
 
 class ControlButton(QPushButton):
@@ -133,6 +130,78 @@ class Draw:
         cmds.select(cl=True)
         return self.curve
 
+class SaveNotification(QtWidgets.QWidget):
+    def __init__(self, text=".  .Curve active.  .", duration=1500, parent=None):
+        super(SaveNotification, self).__init__(parent or master_window())
+
+        self.setWindowFlags(
+            QtCore.Qt.FramelessWindowHint |
+            QtCore.Qt.Tool |
+            QtCore.Qt.BypassWindowManagerHint
+        )
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        self.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents, True)
+        self.setAttribute(QtCore.Qt.WA_AlwaysStackOnTop, True)
+
+        self.setFixedHeight(60)
+
+        notificationlayout = QtWidgets.QVBoxLayout(self)
+        #layout.setContentsMargins(15, 15, 15, 15)
+        notificationlayout.setContentsMargins(20, 10, 20, 10)
+        notificationlayout.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.savelabel = QtWidgets.QLabel(text)
+        
+        self.savelabel.setStyleSheet("""
+            color: white;
+            font-size: 17px;
+            font-weight: bold;
+            padding: 4px 8px;
+        """)
+        notificationlayout.addWidget(self.savelabel)
+
+        self.setStyleSheet("""
+            background-color: rgba(0, 0, 0, 130);
+            border-radius: 12px;
+        """)
+
+        self.move_to_viewport_top_center()
+        self.fade_in_out(duration)
+
+    def fade_in_out(self, duration):
+        self.setWindowOpacity(0.0)
+        self.anim = QtCore.QPropertyAnimation(self, b"windowOpacity")
+        self.anim.setDuration(400)
+        self.anim.setStartValue(0.0)
+        self.anim.setEndValue(1.0)
+        self.anim.setEasingCurve(QtCore.QEasingCurve.InOutQuad)
+        self.anim.finished.connect(lambda: QtCore.QTimer.singleShot(duration, self.fade_out_and_close))
+        self.anim.start(QtCore.QAbstractAnimation.DeleteWhenStopped)
+
+    def fade_out_and_close(self):
+        self.anim = QtCore.QPropertyAnimation(self, b"windowOpacity")
+        self.anim.setDuration(400)
+        self.anim.setStartValue(self.windowOpacity())
+        self.anim.setEndValue(0.0)
+        self.anim.finished.connect(self.close)
+        self.anim.start(QtCore.QAbstractAnimation.DeleteWhenStopped)
+
+    def move_to_viewport_top_center(self):
+        view = omui.M3dView.active3dView()
+        view_widget_ptr = view.widget()
+        if view_widget_ptr:
+            widget = wrapInstance(int(view_widget_ptr), QtWidgets.QWidget)
+            if widget:
+                viewport_pos = widget.mapToGlobal(QtCore.QPoint(0, 0))
+                width = widget.width()
+                self.setFixedWidth(width)
+                self.move(viewport_pos.x(), viewport_pos.y())
+
+    @staticmethod
+    def show_message(text="@staticmethod is very interesting", duration=1500):
+        #print('hi hi')
+        overlay = SaveNotification(text=text, duration=duration)
+        overlay.show()
 
 class ControlLoader:
     def __init__(self, scroll_layout, icon_dir):
@@ -251,7 +320,10 @@ class ControlLoader:
         
         draw = Draw(tmp_grp)
         draw.write_curve(name=name, force=True)
-        cmds.inViewMessage(amg=f'Saved control: <hl>{name}</hl>', pos='topCenter', fade=True)
+        SaveNotification.show_message(f'Saved control:    {name}')
+        #widget = SaveNotification()
+        #widget.show_message()
+        #cmds.inViewMessage(amg=f'Saved control: <hl>{name}</hl>', pos='topCenter', fade=True)
         cmds.delete(tmp_grp)
         self.load_controls()
 
@@ -443,9 +515,9 @@ class ControlLibraryUI:
     def setup_ui(self):
         #UI settings
         self.ui.setWindowTitle('CLib- Control Studio')
-        self.ui.setParent(get_maya_main_window())
+        self.ui.setParent(master_window())
         # self.ui.setWindowFlags(self.ui.windowFlags() | Qt.WindowStaysOnTopHint)
-        self.ui.setParent(get_maya_main_window())
+        self.ui.setParent(master_window())
         self.ui.setWindowFlags(Qt.Window)
         self.ui.setWindowIcon(QIcon(os.path.join(icon_dir, "ControlLib.png")))
         self.ui.resize(1000, 200)
@@ -1027,6 +1099,10 @@ class ControlLibraryUI:
         self.ui.show()
 
 
+def master_window():
+    master_window = omui.MQtUtil.mainWindow()
+    return wrapInstance(int(master_window), QWidget)
+
 #Final UI init and Execution
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 ui_file = os.path.join(SCRIPT_DIR, "ClibUI.ui")
@@ -1050,12 +1126,12 @@ def show_splash():
     # splash_pix.start()
     # splash.show()
 
-    #QTimer.singleShot(800, continue_to_ui)
+    # QTimer.singleShot(800, continue_to_ui)
     continue_to_ui()
 
 
 def continue_to_ui():
-    splash.close()
+    #splash.close()
     control_ui.show()
 
 
