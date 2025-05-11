@@ -49,15 +49,25 @@ My main objeective was to create a tool that could help streamline the control/c
 
 I've done my best to make sure the tool itself feels pretty intuitive but if anything is confusing please don't hesitate to refer to the explained features below:
 
+<br>
+</div>
+
+* UI Overview
+ 
+<div align="center">
+  
+> CLib comes with 18 preset Curves, these and all user created curves are displayed on the left hand side of the tool while the panel on the right has menus for curve customization. The panel on the right includes 2 menus, the first and default menu where most visuals of the stored curves can be customized before being created, and the second attribute menu where you can specify the name of the control before you create it and specify whether you'd like it to be created with
+an offset/NPO group above it.
 
 ![image](https://github.com/user-attachments/assets/99d2c77a-4377-4638-b665-d70ca38cb412)
 
-CLib comes with 18 preset Curves, these and all user created curves are displayed on the left hand side of the tool while the panel on the right has menus for curve customization.
+> 
+. 
 
-The panel on the right includes 2 menus, the first and default menu where most visuals of the stored curves can be customized before being created, and the second attribute menu where you can specify the name of the control before you create it and specify whether you'd like it to be created with
-an offset/NPO group above it.
 
-You can alternate between the two menus using the buttons at the two buttons at the top
+> You can alternate between the two menus using the buttons at the two buttons at the top
+> > 
+. 
 ![CLib_Swapmenus](https://github.com/user-attachments/assets/6e73ac19-9971-4d49-b5f8-6157f9b8992c)
 
 
