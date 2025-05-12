@@ -9,7 +9,7 @@ def install_clib_shelf_button():
     SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
     icon_dir = os.path.join(SCRIPT_DIR, "icons")
     icon_name = os.path.join(icon_dir, "logo.png")
-    script = '''import CLib.clibdemo as CLib
+    script = '''import CLib.main as CLib
 from importlib import reload
 reload(CLib)
 CLib'''
