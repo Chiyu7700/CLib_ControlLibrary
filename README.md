@@ -61,7 +61,7 @@ an offset/NPO group above it.
 
 <br>
 
-* Menu Buttons
+* Menu Navigation Buttons
  
   
 > You can alternate between the two menus using the buttons at the top of the right Panel
