@@ -89,5 +89,17 @@ an offset/NPO group above it.
 . 
 ![creating_control](https://github.com/user-attachments/assets/0e2a6723-b05f-4145-8ebc-1a100d2add3c)
 
+<br>
+
+* Primary Axis option
+ 
+ 
+> You may have cases where the primary axis of your joints for example is the X-axis and the control is being orriented in an undesirable direction you can try using this option to adjust it
+> > 
+. 
+![CLib_axis](https://github.com/user-attachments/assets/d6842b9d-5ae9-4044-9183-d89b6b65ac00)
+
+
+
 
 
