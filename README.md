@@ -26,6 +26,7 @@ Enjoy
 ### Table of Contents
 * [About](#About)
 * [Instructions](#Instructions)
+* [Planned_Features](#PLanned_Features)
 
 
 -----
@@ -94,12 +95,32 @@ an offset/NPO group above it.
 * Primary Axis option
  
  
-> You may have cases where the primary axis of your joints for example is the X-axis and the control is being orriented in an undesirable direction you can try using this option to adjust it
+> You may have cases where the primary axis of your joints for example is the X-axis and the control is being oriented in an undesirable direction you can try using this option to adjust it
 > > 
 . 
 ![CLib_axis](https://github.com/user-attachments/assets/d6842b9d-5ae9-4044-9183-d89b6b65ac00)
 
 
+### Planned_Features
 
+more than just a Library I'd love this tool to be a Studio of some sorts, with ease of access to many control and curve creation/manipulation features while also keeping in mind UI real-estate. Currently my planned features are:
+
+* Auto-generated icons for custom curves
+> Automatically create icons for shapes users save instead of simply resorting to a default icon
+
+* Overall improvements to the UI
+> Polishing up the control layout, and overall improved scaling on different resolutions
+
+* Control Filtering
+> Enable users to save and filter curves by tags
+
+* Automatic/smart hierarchy parenting of control curves
+> More rig-aware control creation that will detect existing joint hierarchy and control relationships to parent created created controls under the appropriate existing controls(if any).
+
+* Batch recolor of existing curves
+> Enable users to change color of an existing or multiple existing curves with the click of a button
+
+* Mirror controls across axis
+>Enable users to mirror control shapes across a specified axis
 
 
