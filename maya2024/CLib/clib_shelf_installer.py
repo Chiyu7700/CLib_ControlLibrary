@@ -1,6 +1,13 @@
 import maya.cmds as cmds
 import maya.mel as mel
 import os
+import sys
+
+scripts_dir = os.path.expanduser('~/maya/scripts')
+
+# Add it to sys.path if not already present
+if scripts_dir not in sys.path:
+    sys.path.append(scripts_dir)
 
 def install_clib_shelf_button():
     shelf_name = "Custom"
