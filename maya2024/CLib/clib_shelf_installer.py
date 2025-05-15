@@ -5,7 +5,6 @@ import sys
 
 scripts_dir = os.path.expanduser('~/maya/scripts')
 
-# Add it to sys.path if not already present
 if scripts_dir not in sys.path:
     sys.path.append(scripts_dir)
 
