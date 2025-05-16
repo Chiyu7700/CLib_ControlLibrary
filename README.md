@@ -17,9 +17,10 @@ Copy the 📁`Clib` folder (either in the maya2024 or maya 2025 folders dependin
 After copying, your folder structure should look like this:  
 `Documents/maya/scripts/CLib/`
 
-then launch Maya and drag and drop the `clib_shelf_installer.py` file to your maya viewport.
+In Maya and drag and drop the `clib_shelf_installer.py` file to your maya viewport.
 Enjoy
-
+>  [!Note]
+> If for some reason it doesnt run after this you may have to restart Maya after installing.
 
 -----
 
