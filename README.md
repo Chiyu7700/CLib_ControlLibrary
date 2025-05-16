@@ -27,6 +27,7 @@ Enjoy
 * [About](#About)
 * [Instructions](#Instructions)
 * [Planned_Features](#PLanned_Features)
+* [Thanks](#Thanks)
 
 
 -----
@@ -100,6 +101,9 @@ an offset/NPO group above it.
 . 
 ![CLib_axis](https://github.com/user-attachments/assets/d6842b9d-5ae9-4044-9183-d89b6b65ac00)
 
+<br>
+
+-----
 
 ### Planned_Features
 
@@ -123,4 +127,10 @@ more than just a Library I'd love this tool to be a Studio of some sorts, with e
 * Mirror controls across axis
 >Enable users to mirror control shapes across a specified axis
 
+<br>
+
+-----
+
+### Thanks
+A special thanks to you for reading this far down and giving this tool a go. IF you run into any issues or have any suggestion please dont hesitate to reach out to me on LinkedIn
 
