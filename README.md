@@ -20,7 +20,7 @@ After copying, your folder structure should look like this:
 In Maya and drag and drop the `clib_shelf_installer.py` file to your maya viewport.
 Enjoy
 >  [!Note]
-> If for some reason it doesnt run after this you may have to restart Maya after installing.
+> If for some reason it doesnt run after this you may have to restart Maya after installing but I've tried to make it work without users having to do so.
 
 -----
 
