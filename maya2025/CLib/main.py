@@ -15,21 +15,27 @@ from maya import OpenMayaUI as omui
 
 
 class ControlButton(QPushButton):
-    def __init__(self, name, file_path, icon_path=None, delete_callback=None):
+    def __init__(self, name, file_path, icon_path=None, delete_callback=None, replace_callback=None):
         super(ControlButton, self).__init__(name)
         self.name = name
         self.file_path = file_path
         self.icon_path = icon_path
         self.delete_callback = delete_callback
+        self.replace_callback = replace_callback
 
+        self.setToolTip("Click: create control\nCtrl+Click: replace shape on selected controls")
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.open_menu)
 
     def open_menu(self, pos):
         menu = QMenu(self)
+        replace_action = menu.addAction("Replace Shape on Selected")
+        menu.addSeparator()
         delete_action = menu.addAction("Delete")
         action = menu.exec_(self.mapToGlobal(pos))
-        if action == delete_action:
+        if action == replace_action and self.replace_callback:
+            self.replace_callback(self.name)
+        elif action == delete_action:
             self.confirm_and_delete()
 
     def confirm_and_delete(self):
@@ -115,8 +121,7 @@ class Draw:
             points = [[p * scale for p in pt] for pt in info['cv_pos']]
             new_curve = cmds.curve(point=points, degree=info['degree'])
 
-            # close only this shape, and only if it was saved closed/periodic -
-            # open shapes on the same control (e.g. crosshair lines) must stay open
+            # only close the shape that was just made, closing all of them was closing the crosshair lines too
             if info['form'] >= 1:
                 new_shape = cmds.listRelatives(new_curve, shapes=True, fullPath=True)[0]
                 if cmds.getAttr(f"{new_shape}.form") == 0:
@@ -351,7 +356,8 @@ class ControlLoader:
                     name=name,
                     file_path=file_path,
                     icon_path=icon_path if os.path.exists(icon_path) else None,
-                    delete_callback=self.remove_button
+                    delete_callback=self.remove_button,
+                    replace_callback=self.replace_shape
             )
             if os.path.exists(icon_path):
                 btn_icon = QIcon(icon_path)
@@ -374,14 +380,13 @@ class ControlLoader:
                 QPushButton:hover {
                     background-color: #555555;
                     border: 2px solid #666666;
-                    cursor: pointer;
                 }
                 QPushButton:pressed {
                     background-color: #333333;
                     border: 2px solid #444444;
                 }
             """)
-            btn.clicked.connect(functools.partial(self.create_control, name))
+            btn.clicked.connect(functools.partial(self.shape_clicked, name))
             
         
 
@@ -438,7 +443,7 @@ class ControlLoader:
                 cmds.setAttr(f"{shape}.overrideRGBColors", 1)
                 cmds.setAttr(f"{shape}.overrideColorRGB", *self.selected_color)
 
-            # Axis orientation block
+            # Axis orrientation Block
             rot = self.axis_rotation[self.axis]
             for shape in shapes:
                 cvs = cmds.ls(f"{shape}.cv[*]", flatten=True)
@@ -467,10 +472,75 @@ class ControlLoader:
                 cmds.delete(cmds.parentConstraint(ctrl, offset_grp))
                 cmds.parent(ctrl, offset_grp)
         except Exception as e:
-            cmds.warning(f"[CLib] Could not create control '{name}': {e}")
+            cmds.warning(f"Error creating control {name}: {e}")
         finally:
-            # always close the chunk, even on failure, so Maya's undo queue never stays open
+            # close the undo chunk here so it still closes if something errors
             cmds.undoInfo(closeChunk=True)
+
+    def shape_clicked(self, name):
+        # ctrl click swaps the shape on the selected controls, normal click makes a new control
+        if QApplication.keyboardModifiers() & Qt.ControlModifier:
+            self.replace_shape(name)
+        else:
+            self.create_control(name)
+
+    def replace_shape(self, name):
+        # only selected transforms that already have curve shapes count as controls
+        selected_objects = cmds.ls(selection=True, type="transform", long=True) or []
+        targets = [obj for obj in selected_objects if cmds.listRelatives(obj, shapes=True, type="nurbsCurve")]
+        if not targets:
+            cmds.warning("No control selected to replace the shape on.")
+            return
+
+        cmds.undoInfo(openChunk=True)
+        try:
+            for target in targets:
+                old_shapes = cmds.listRelatives(target, shapes=True, type="nurbsCurve", fullPath=True)
+
+                # copy the look of the old shape so the control keeps its color and line width
+                old_shape = old_shapes[0]
+                override_on = cmds.getAttr(f"{old_shape}.overrideEnabled")
+                use_rgb = cmds.getAttr(f"{old_shape}.overrideRGBColors")
+                color_index = cmds.getAttr(f"{old_shape}.overrideColor")
+                color_rgb = cmds.getAttr(f"{old_shape}.overrideColorRGB")[0]
+                line_width = cmds.getAttr(f"{old_shape}.lineWidth")
+
+                # build the new shape at the origin with the same scale and axis settings as create
+                tmp_ctrl = Draw().create_curve(name="clib_tmp_replace", shape=name)
+                control_points = cmds.ls(f"{tmp_ctrl}.cv[*]", flatten=True)
+                cmds.scale(self.ctrlscalevalue, self.ctrlscalevalue, self.ctrlscalevalue, control_points, relative=True)
+
+                rot = self.axis_rotation[self.axis]
+                new_shapes = cmds.listRelatives(tmp_ctrl, shapes=True, fullPath=True)
+                for shape in new_shapes:
+                    cvs = cmds.ls(f"{shape}.cv[*]", flatten=True)
+                    for cv in cvs:
+                        cmds.rotate(rot[0], rot[1], rot[2], cv, relative=True, objectSpace=True)
+
+                # move the new shapes under the control, the transform itself is never touched
+                # so constraints, connections and custom attributes all stay
+                moved_shapes = cmds.parent(new_shapes, target, shape=True, relative=True)
+                cmds.delete(tmp_ctrl)
+                cmds.delete(old_shapes)
+
+                short_name = target.split("|")[-1]
+                for i, shape in enumerate(moved_shapes):
+                    shape = cmds.rename(f"{target}|{shape.split('|')[-1]}", f"{short_name}Shape{i if i else ''}")
+                    shape = f"{target}|{shape}"
+                    cmds.setAttr(f"{shape}.overrideEnabled", override_on)
+                    cmds.setAttr(f"{shape}.overrideRGBColors", use_rgb)
+                    cmds.setAttr(f"{shape}.overrideColor", color_index)
+                    cmds.setAttr(f"{shape}.overrideColorRGB", *color_rgb)
+                    cmds.setAttr(f"{shape}.lineWidth", line_width)
+
+            cmds.select(targets)
+        except Exception as e:
+            cmds.warning(f"Error replacing shape with {name}: {e}")
+            return
+        finally:
+            cmds.undoInfo(closeChunk=True)
+
+        SaveNotification.show_message(f'Replaced shape on {len(targets)} control{"s" if len(targets) > 1 else ""}')
 
 
 class ControlLibraryUI:
@@ -498,7 +568,7 @@ class ControlLibraryUI:
     def setup_ui(self):
         #UI settings
         self.ui.setWindowTitle('CLib- Control Studio')
-        self.ui.setObjectName(WINDOW_OBJECT_NAME)  # lets a relaunch find and close this window
+        self.ui.setObjectName(WINDOW_OBJECT_NAME)  # name the window so a reload can find the old one
         self.ui.setParent(master_window())
         # self.ui.setWindowFlags(self.ui.windowFlags() | Qt.WindowStaysOnTopHint)
         self.ui.setParent(master_window())
@@ -732,7 +802,7 @@ class ControlLibraryUI:
             QRadioButton::indicator {
                 width: 12px;
                 height: 12px;
-                border-radius: 6px; /* half of width/height */
+                border-radius: 6px;
                 border: 2px solid #888888;
                 background-color: transparent;
             }
@@ -754,7 +824,7 @@ class ControlLibraryUI:
             QRadioButton::indicator {
                 width: 12px;
                 height: 12px;
-                border-radius: 6px; /* half of width/height */
+                border-radius: 6px;
                 border: 2px solid #888888;
                 background-color: transparent;
             }
@@ -776,7 +846,7 @@ class ControlLibraryUI:
             QRadioButton::indicator {
                 width: 12px;
                 height: 12px;
-                border-radius: 6px; /* half of width/height */
+                border-radius: 6px;
                 border: 2px solid #888888;
                 background-color: transparent;
             }
@@ -789,11 +859,12 @@ class ControlLibraryUI:
             }
         """)
 
-        #Scale slider init - slider steps are tenths, so 1-100 maps to a 0.1-10.0 scale
+        #Scale slider init
+        # slider goes 1-100 and gets divided by 10 for the actual scale
         self.slider = QSlider(Qt.Horizontal)
         self.slider.setMinimum(1)
         self.slider.setMaximum(100)
-        self.slider.setValue(10)  # 1.0, matching ControlLoader.ctrlscalevalue
+        self.slider.setValue(10)  # 10 = scale of 1.0
         self.slider.setTickInterval(5)
 
         self.update_label(self.slider.value())
@@ -850,21 +921,19 @@ class ControlLibraryUI:
 
         pickcolor_btn.setStyleSheet("""
             QPushButton {
-                border: 1px solid #bdbdbd;   
-                background-color: #c1c1c1;   
-                color: black;                
-                padding: 2px 5px;           
-                font: bold 10pt;             
-                border-radius: 5px;         
-                hover: rgb(255, 255, 255);
-
+                border: 1px solid #bdbdbd;
+                background-color: #c1c1c1;
+                color: black;
+                padding: 2px 5px;
+                font: bold 10pt;
+                border-radius: 5px;
             }
             QPushButton:hover {
-                background-color: #ffee6f; 
+                background-color: #ffee6f;
                 border: 1px solid #3c8e40;
             }
             QPushButton:pressed {
-                background-color: #ffcc33; 
+                background-color: #ffcc33;
                 border: 1.3px solid #d7a21b;
             }
             QPushButton:disabled {
@@ -876,25 +945,23 @@ class ControlLibraryUI:
 
         storecontrol_btn.setStyleSheet("""
             QPushButton {
-                border: 1px solid #bdbdbd;   
-                background-color: #c1c1c1;   
-                color: black;                
-                padding: 2px 5px;           
-                font: bold 10pt;             
-                border-radius: 5px;         
-                hover: rgb(255, 255, 255);
-
+                border: 1px solid #bdbdbd;
+                background-color: #c1c1c1;
+                color: black;
+                padding: 2px 5px;
+                font: bold 10pt;
+                border-radius: 5px;
             }
             QPushButton:hover {
-                background-color: #ffee6f; 
+                background-color: #ffee6f;
                 border: 1px solid #3c8e40;
             }
             QPushButton:pressed {
-                background-color: #ffcc33; 
+                background-color: #ffcc33;
                 border: 1.3px solid #d7a21b;
             }
             QPushButton:disabled {
-                background-color: #e0e0e0; 
+                background-color: #e0e0e0;
                 color: #9e9e9e;
                 border: 1px solid #cccccc;
             }
@@ -1091,7 +1158,7 @@ WINDOW_OBJECT_NAME = "CLibControlStudio"
 
 
 def close_existing_window():
-    # the shelf button reloads this module, so close any window left over from the last launch
+    # shelf button reloads the module so close the old window first
     for window in master_window().findChildren(QWidget, WINDOW_OBJECT_NAME):
         window.close()
         window.deleteLater()

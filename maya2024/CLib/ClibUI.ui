@@ -364,15 +364,12 @@ border-top-right-radius: 10x;</string>
                              <item>
                               <widget class="QPushButton" name="pickColor_Btn">
                                <property name="styleSheet">
-                                <string notr="true">border: 1px solid #dcdcdc;   /* Light gray border */
-background-color: #f0f0f0;   /* Light gray background */
-color: black;                /* Black text */
-padding: 2px 5px;            /* Some padding */
-font: bold 10pt;              /* Bold font with 10pt size */
-border-radius: 5px;           /* Rounded corners */
-hover: rgb(255, 255, 255);
-
-</string>
+                                <string notr="true">border: 1px solid #dcdcdc;
+background-color: #f0f0f0;
+color: black;
+padding: 2px 5px;
+font: bold 10pt;
+border-radius: 5px;</string>
                                </property>
                                <property name="text">
                                 <string>Pick Color</string>
@@ -752,15 +749,12 @@ border-bottom-right-radius: 10x;</string>
                       <item>
                        <widget class="QPushButton" name="pushButton_2">
                         <property name="styleSheet">
-                         <string notr="true">border: 1px solid #dcdcdc;   /* Light gray border */
-background-color: #f0f0f0;   /* Light gray background */
-color: black;                /* Black text */
-padding: 2px 5px;            /* Some padding */
-font: bold 10pt;              /* Bold font with 10pt size */
-border-radius: 5px;           /* Rounded corners */
-hover: rgb(255, 255, 255);
-
-</string>
+                         <string notr="true">border: 1px solid #dcdcdc;
+background-color: #f0f0f0;
+color: black;
+padding: 2px 5px;
+font: bold 10pt;
+border-radius: 5px;</string>
                         </property>
                         <property name="text">
                          <string>Store Control</string>

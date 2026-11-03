@@ -29,7 +29,7 @@ CLib'''
         annotation="Launch CLib Control Studio",
         image=icon_name,
         imageOverlayLabel="CLib",
-        overlayLabelColor=(1, 1, 1),  # White label text
+        overlayLabelColor=(1, 1, 1),
         overlayLabelBackColor=(0, 0, 0, 0.5),
         command=script,
         sourceType="python"
