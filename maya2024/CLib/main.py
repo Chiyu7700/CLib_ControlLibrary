@@ -1,12 +1,13 @@
 import os
 import json
+import math
 import functools
 from PySide2.QtCore import *
 from PySide2 import QtWidgets, QtCore
 from PySide2.QtWidgets import *
 from PySide2.QtUiTools import QUiLoader
 import PySide2.QtWidgets as QT
-from PySide2.QtGui import QIcon, QColor, QMovie
+from PySide2.QtGui import QIcon, QColor, QMovie, QImage, QPainter, QPainterPath, QPen
 import maya.cmds as cmds
 from shiboken2 import wrapInstance
 from maya import OpenMayaUI as omui
@@ -108,6 +109,59 @@ class Draw:
 
         with open(json_path, 'w') as f:
             json.dump(curve_data, f, indent=4)
+
+    def get_curve_points(self, shape):
+        # sample along the curve so round shapes come out round, not as the cv cage
+        degree = cmds.getAttr(f"{shape}.degree")
+        spans = cmds.getAttr(f"{shape}.spans")
+        start = cmds.getAttr(f"{shape}.minValue")
+        end = cmds.getAttr(f"{shape}.maxValue")
+        steps = spans if degree == 1 else spans * 12
+        return [cmds.pointOnCurve(shape, parameter=start + (end - start) * i / steps, position=True)
+                for i in range(steps + 1)]
+
+    def write_icon(self, icon_path, size=100, margin=8):
+        # draws the icon in the same style as the hand made ones, yellow lines on transparent
+        lines = [self.get_curve_points(shape) for shape in cmds.listRelatives(self.curve, shapes=True, fullPath=True)]
+        all_points = [p for line in lines for p in line]
+        extents = [max(p[i] for p in all_points) - min(p[i] for p in all_points) for i in range(3)]
+
+        flat_axis = extents.index(min(extents))
+        if extents[flat_axis] < max(extents) * 0.01:
+            # flat shapes get looked at straight on (top, front or side)
+            views = {0: lambda p: (-p[2], -p[1]), 1: lambda p: (p[0], p[2]), 2: lambda p: (p[0], -p[1])}
+            project = views[flat_axis]
+        else:
+            # 3d shapes get a 3/4 view like the box and pyramid icons
+            yaw, pitch = math.radians(35), math.radians(25)
+            cam = (math.cos(pitch) * math.sin(yaw), math.sin(pitch), math.cos(pitch) * math.cos(yaw))
+            right = (cam[2], 0.0, -cam[0])
+            length = math.hypot(right[0], right[2])
+            right = (right[0] / length, 0.0, right[2] / length)
+            up = (cam[1] * right[2], cam[2] * right[0] - cam[0] * right[2], -cam[1] * right[0])
+            project = lambda p: (sum(a * b for a, b in zip(p, right)), -sum(a * b for a, b in zip(p, up)))
+
+        lines = [[project(p) for p in line] for line in lines]
+        xs = [p[0] for line in lines for p in line]
+        ys = [p[1] for line in lines for p in line]
+        width, height = max(xs) - min(xs), max(ys) - min(ys)
+        scale = (size - margin * 2) / max(width, height, 0.0001)
+        offset_x = size / 2 - (min(xs) + width / 2) * scale
+        offset_y = size / 2 - (min(ys) + height / 2) * scale
+
+        image = QImage(size, size, QImage.Format_ARGB32)
+        image.fill(Qt.transparent)
+        painter = QPainter(image)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setPen(QPen(QColor(220, 218, 148), 3, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+        for line in lines:
+            path = QPainterPath()
+            path.moveTo(line[0][0] * scale + offset_x, line[0][1] * scale + offset_y)
+            for x, y in line[1:]:
+                path.lineTo(x * scale + offset_x, y * scale + offset_y)
+            painter.drawPath(path)
+        painter.end()
+        image.save(icon_path)
 
     def create_curve(self, name='default', shape='circle', scale=1.0):
         file_path = os.path.join(SHAPE_DIR, f"{shape}.json")
@@ -346,12 +400,14 @@ class ControlLoader:
         
         draw = Draw(tmp_grp)
         draw.write_curve(name=name, force=True)
+        draw.write_icon(os.path.join(self.icon_dir, f"{name}.png"))
         SaveNotification.show_message(f'Saved control:    {name}')
         #widget = SaveNotification()
         #widget.show_message()
         #cmds.inViewMessage(amg=f'Saved control: <hl>{name}</hl>', pos='topCenter', fade=True)
         cmds.delete(tmp_grp)
-        self.load_controls()
+        # refresh instead of load so the old buttons get cleared and dont stack under the new ones
+        self.refresh_buttons()
 
     def load_controls(self):
         columns = 3
