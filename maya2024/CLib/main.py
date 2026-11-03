@@ -283,7 +283,7 @@ class ControlLoader:
 
             # self.swatch.setStyleSheet(self.get_color_style(color))
             self.swatch.setStyleSheet(base_presetstyle + extra_style)
-            self.swatch.clicked.connect(functools.partial(self.set_color_from_preset, color))
+            self.swatch.setToolTip("Click: set color, also recolors selected controls")
             self.swatch.clicked.connect(functools.partial(self.set_color_from_preset, color))
 
             self.presetcolorlayout.addWidget(self.swatch)
@@ -292,6 +292,28 @@ class ControlLoader:
         self.selected_color = color_tuple
         self.color_swatch.setStyleSheet(self.get_color_style(color_tuple) + self.extraswatch_style)
         self.color_swatch.setToolTip(self.get_color_tooltip(color_tuple))
+        self.recolor_selected()
+
+    def recolor_selected(self):
+        # nothing selected or just joints means the color is only for the next control
+        targets = self.get_selected_controls()
+        if not targets:
+            return
+
+        cmds.undoInfo(openChunk=True)
+        try:
+            for target in targets:
+                for shape in cmds.listRelatives(target, shapes=True, type="nurbsCurve", fullPath=True):
+                    cmds.setAttr(f"{shape}.overrideEnabled", 1)
+                    cmds.setAttr(f"{shape}.overrideRGBColors", 1)
+                    cmds.setAttr(f"{shape}.overrideColorRGB", *self.selected_color)
+        except Exception as e:
+            cmds.warning(f"Error recoloring controls: {e}")
+            return
+        finally:
+            cmds.undoInfo(closeChunk=True)
+
+        SaveNotification.show_message(f'Recolored {len(targets)} control{"s" if len(targets) > 1 else ""}')
         # self.color_manager = color_manager
 
 
@@ -484,10 +506,13 @@ class ControlLoader:
         else:
             self.create_control(name)
 
-    def replace_shape(self, name):
+    def get_selected_controls(self):
         # only selected transforms that already have curve shapes count as controls
         selected_objects = cmds.ls(selection=True, type="transform", long=True) or []
-        targets = [obj for obj in selected_objects if cmds.listRelatives(obj, shapes=True, type="nurbsCurve")]
+        return [obj for obj in selected_objects if cmds.listRelatives(obj, shapes=True, type="nurbsCurve")]
+
+    def replace_shape(self, name):
+        targets = self.get_selected_controls()
         if not targets:
             cmds.warning("No control selected to replace the shape on.")
             return
@@ -1040,6 +1065,7 @@ class ControlLibraryUI:
                 self.control_loader.selected_color) + self.control_loader.extraswatch_style)
             self.control_loader.color_swatch.setToolTip(
                 self.control_loader.get_color_tooltip(self.control_loader.selected_color))
+            self.control_loader.recolor_selected()
 
     def set_page_if_checked(self, index, checked):
         if checked:
