@@ -113,19 +113,21 @@ class Draw:
 
         for i, (shp, info) in enumerate(curve_dict.items()):
             points = [[p * scale for p in pt] for pt in info['cv_pos']]
-            if i == 0:
-                self.curve = cmds.curve(point=points, degree=info['degree'], name=name)
-            else:
-                tmp = cmds.curve(point=points, degree=info['degree'])
-                shape = cmds.listRelatives(tmp, shapes=True)[0]
-                cmds.parent(shape, self.curve, shape=True, relative=True)
-                cmds.delete(tmp)
+            new_curve = cmds.curve(point=points, degree=info['degree'])
 
+            # close only this shape, and only if it was saved closed/periodic -
+            # open shapes on the same control (e.g. crosshair lines) must stay open
             if info['form'] >= 1:
-                shape_nodes = cmds.listRelatives(self.curve, shapes=True, fullPath=True)
-                for shape_node in shape_nodes:
-                    if cmds.getAttr(f"{shape_node}.form") == 0:
-                        cmds.closeCurve(shape_node, ch=False, ps=0, rpo=True)
+                new_shape = cmds.listRelatives(new_curve, shapes=True, fullPath=True)[0]
+                if cmds.getAttr(f"{new_shape}.form") == 0:
+                    cmds.closeCurve(new_shape, ch=False, ps=0, rpo=True)
+
+            if i == 0:
+                self.curve = cmds.rename(new_curve, name)
+            else:
+                new_shape = cmds.listRelatives(new_curve, shapes=True, fullPath=True)[0]
+                cmds.parent(new_shape, self.curve, shape=True, relative=True)
+                cmds.delete(new_curve)
 
         cmds.select(cl=True)
         return self.curve
@@ -199,7 +201,6 @@ class SaveNotification(QtWidgets.QWidget):
 
     @staticmethod
     def show_message(text="@staticmethod is very interesting", duration=1500):
-        #print('hi hi')
         overlay = SaveNotification(text=text, duration=duration)
         overlay.show()
 
@@ -245,8 +246,6 @@ class ControlLoader:
 
     def scalevalue(self, value):
         self.ctrlscalevalue = value
-        #print('scale value is updating')
-        print(self.ctrlscalevalue)
 
     def add_color_swatch(self, color):
         self.swatch_style = self.get_color_style(color)  
@@ -414,72 +413,52 @@ class ControlLoader:
 
 
     def create_control(self, name):
+        selected_objects = cmds.ls(selection=True)
+
         cmds.undoInfo(openChunk=True)
         try:
-
-            selected_objects = cmds.ls(selection=True)
-
-            # come back to this if/not and work a way to not have to duplicate the draw command
-            if not selected_objects:
-                print('No object selected')
-                draw = Draw()
-                ctrl = draw.create_curve(name=name, shape=name)
-                shapes = cmds.listRelatives(ctrl, shapes=True, fullPath=True)
-                for shape in shapes:
-                    cmds.setAttr(f"{shape}.overrideEnabled", 1)
-                    cmds.setAttr(f"{shape}.overrideRGBColors", 1)
-                    cmds.setAttr(f"{shape}.overrideColorRGB", *self.selected_color)
-                control_points = cmds.ls(f"{ctrl}.cv[*]", flatten=True)
-                cmds.scale(self.ctrlscalevalue, self.ctrlscalevalue, self.ctrlscalevalue, control_points, relative=True)
-                return
-
-            # selected_axis = self.get_selected_axis()
             draw = Draw()
             ctrl = draw.create_curve(name=name, shape=name)
+            shapes = cmds.listRelatives(ctrl, shapes=True, fullPath=True) or []
 
-            print('scale value in update class')
-            print(self.ctrlscalevalue)
-            #Assuming a single selection for simplicity
-            selected_obj = selected_objects[0]
-            obj_pos = cmds.xform(selected_obj, query=True, worldSpace=True, rp=True)
-            obj_rot = cmds.xform(selected_obj, query=True, worldSpace=True, ro=True)
             control_points = cmds.ls(f"{ctrl}.cv[*]", flatten=True)
             cmds.scale(self.ctrlscalevalue, self.ctrlscalevalue, self.ctrlscalevalue, control_points, relative=True)
-            cmds.xform(ctrl, worldSpace=True, translation=obj_pos)
-            cmds.xform(ctrl, worldSpace=True, ro=obj_rot)
-            
+
+            #Assuming a single selection for simplicity
+            if selected_objects:
+                selected_obj = selected_objects[0]
+                obj_pos = cmds.xform(selected_obj, query=True, worldSpace=True, rp=True)
+                obj_rot = cmds.xform(selected_obj, query=True, worldSpace=True, ro=True)
+                cmds.xform(ctrl, worldSpace=True, translation=obj_pos)
+                cmds.xform(ctrl, worldSpace=True, ro=obj_rot)
+
             #override curve color with the selected color from the picker
-            shapes = cmds.listRelatives(ctrl, shapes=True, fullPath=True)
             for shape in shapes:
                 cmds.setAttr(f"{shape}.overrideEnabled", 1)
                 cmds.setAttr(f"{shape}.overrideRGBColors", 1)
                 cmds.setAttr(f"{shape}.overrideColorRGB", *self.selected_color)
-        except Exception as e:
-            print("Error creating control:", e)
-        finally:
-            print(self.prefix, 'helloworld')
-            # Axis orrientation Block ( Consider restructure/implementing a fail check)
+
+            # Axis orientation block
             rot = self.axis_rotation[self.axis]
-            if shapes:
-                for shape in shapes:
-                    cvs = cmds.ls(f"{shape}.cv[*]", flatten=True)
-                    for cv in cvs:
-                        cmds.rotate(rot[0], rot[1], rot[2], cv, relative=True, objectSpace=True)
+            for shape in shapes:
+                cvs = cmds.ls(f"{shape}.cv[*]", flatten=True)
+                for cv in cvs:
+                    cmds.rotate(rot[0], rot[1], rot[2], cv, relative=True, objectSpace=True)
+
             # Name setup for Control
-            originalname = ctrl
             name_parts = []
-            if hasattr(self, 'prefix') and self.prefix:
+            if self.prefix:
                 name_parts.append(self.prefix.rstrip('_'))
 
-            if hasattr(self, 'curvename') and self.curvename:
+            if self.curvename:
                 name_parts.append(self.curvename)
             else:
-                name_parts.append(originalname)
+                name_parts.append(ctrl)
 
-            if hasattr(self, 'suffix') and self.suffix:
+            if self.suffix:
                 name_parts.append(self.suffix.lstrip('_'))
 
-            ctrl = cmds.rename(ctrl, ("_".join(name_parts) if name_parts else self.name))
+            ctrl = cmds.rename(ctrl, "_".join(name_parts))
 
             # Implement NPO/Offset group
             if self.addOffset:
@@ -487,6 +466,10 @@ class ControlLoader:
                 offset_grp = cmds.group(empty=True, name=offset_grp_name)
                 cmds.delete(cmds.parentConstraint(ctrl, offset_grp))
                 cmds.parent(ctrl, offset_grp)
+        except Exception as e:
+            cmds.warning(f"[CLib] Could not create control '{name}': {e}")
+        finally:
+            # always close the chunk, even on failure, so Maya's undo queue never stays open
             cmds.undoInfo(closeChunk=True)
 
 
@@ -515,6 +498,7 @@ class ControlLibraryUI:
     def setup_ui(self):
         #UI settings
         self.ui.setWindowTitle('CLib- Control Studio')
+        self.ui.setObjectName(WINDOW_OBJECT_NAME)  # lets a relaunch find and close this window
         self.ui.setParent(master_window())
         # self.ui.setWindowFlags(self.ui.windowFlags() | Qt.WindowStaysOnTopHint)
         self.ui.setParent(master_window())
@@ -805,14 +789,14 @@ class ControlLibraryUI:
             }
         """)
 
-        #Scale slider init
+        #Scale slider init - slider steps are tenths, so 1-100 maps to a 0.1-10.0 scale
         self.slider = QSlider(Qt.Horizontal)
         self.slider.setMinimum(1)
         self.slider.setMaximum(100)
-        self.slider.setValue(1)
+        self.slider.setValue(10)  # 1.0, matching ControlLoader.ctrlscalevalue
         self.slider.setTickInterval(5)
 
-        self.scalelabel.setText(f"Universal Scale:    {self.slider.value()}")
+        self.update_label(self.slider.value())
         # scaleLabel_layout.addWidget(self.label)
         scaleSlider_layout.addWidget(self.slider)
 
@@ -1063,10 +1047,9 @@ class ControlLibraryUI:
         return 'Y' 
 
     def update_label(self, value):
-        self.scalelabel.setText(f"Universal Scale:    {self.slider.value()}")
+        self.scalelabel.setText(f"Universal Scale:    {value / 10.0:.1f}")
 
     def resizeEvent(self, event):
-        print('all this time')
         super().resizeEvent(event)
         self.rebuild_control_layout()
     
@@ -1103,6 +1086,17 @@ def master_window():
     master_window = omui.MQtUtil.mainWindow()
     return wrapInstance(int(master_window), QWidget)
 
+
+WINDOW_OBJECT_NAME = "CLibControlStudio"
+
+
+def close_existing_window():
+    # the shelf button reloads this module, so close any window left over from the last launch
+    for window in master_window().findChildren(QWidget, WINDOW_OBJECT_NAME):
+        window.close()
+        window.deleteLater()
+
+
 #Final UI init and Execution
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 ui_file = os.path.join(SCRIPT_DIR, "ClibUI.ui")
@@ -1110,6 +1104,7 @@ SHAPE_DIR = os.path.join(SCRIPT_DIR, "shapes")
 icon_dir = os.path.join(SCRIPT_DIR, "icons")
 LOGO_PATH = os.path.join(icon_dir, "logo.gif")
 # color_manager = ControlLoader()
+close_existing_window()
 control_ui = ControlLibraryUI(ui_file, icon_dir)
 
 

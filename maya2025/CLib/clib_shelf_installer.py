@@ -40,5 +40,4 @@ CLib'''
     cmds.tabLayout(shelf_tab, edit=True, selectTab=shelf_name)
 
 def onMayaDroppedPythonFile(*args):
-    print('old me')
     install_clib_shelf_button()
