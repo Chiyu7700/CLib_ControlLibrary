@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import math
 import functools
 from PySide2.QtCore import *
@@ -16,13 +17,14 @@ from maya import OpenMayaUI as omui
 
 
 class ControlButton(QPushButton):
-    def __init__(self, name, file_path, icon_path=None, delete_callback=None, replace_callback=None):
+    def __init__(self, name, file_path, icon_path=None, delete_callback=None, replace_callback=None, rename_callback=None):
         super(ControlButton, self).__init__(name)
         self.name = name
         self.file_path = file_path
         self.icon_path = icon_path
         self.delete_callback = delete_callback
         self.replace_callback = replace_callback
+        self.rename_callback = rename_callback
 
         self.setToolTip("Click: create control\nCtrl+Click: replace shape on selected controls")
         self.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -31,13 +33,22 @@ class ControlButton(QPushButton):
     def open_menu(self, pos):
         menu = QMenu(self)
         replace_action = menu.addAction("Replace Shape on Selected")
+        rename_action = menu.addAction("Rename")
         menu.addSeparator()
         delete_action = menu.addAction("Delete")
         action = menu.exec_(self.mapToGlobal(pos))
         if action == replace_action and self.replace_callback:
             self.replace_callback(self.name)
+        elif action == rename_action:
+            self.ask_rename()
         elif action == delete_action:
             self.confirm_and_delete()
+
+    def ask_rename(self):
+        new_name, ok = QInputDialog.getText(self, "Rename Control", "New name:", QLineEdit.Normal, self.name)
+        new_name = new_name.strip()
+        if ok and new_name and new_name != self.name and self.rename_callback:
+            self.rename_callback(self.name, new_name)
 
     def confirm_and_delete(self):
         confirm = QMessageBox.question(
@@ -435,7 +446,8 @@ class ControlLoader:
                     file_path=file_path,
                     icon_path=icon_path if os.path.exists(icon_path) else None,
                     delete_callback=self.remove_button,
-                    replace_callback=self.replace_shape
+                    replace_callback=self.replace_shape,
+                    rename_callback=self.rename_control
             )
             if os.path.exists(icon_path):
                 btn_icon = QIcon(icon_path)
@@ -484,6 +496,29 @@ class ControlLoader:
         
     def remove_button(self, btn):
         self.refresh_buttons()
+
+    def rename_control(self, old_name, new_name):
+        # the name ends up as the maya node name so keep it to letters, numbers and _
+        if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", new_name):
+            cmds.warning(f"'{new_name}' is not a valid name, use letters, numbers and _ and dont start with a number.")
+            return
+        old_json = os.path.join(SHAPE_DIR, f"{old_name}.json")
+        new_json = os.path.join(SHAPE_DIR, f"{new_name}.json")
+        # windows sees circle and Circle as the same file so let case only renames through
+        if os.path.exists(new_json) and new_name.lower() != old_name.lower():
+            cmds.warning(f"A control called '{new_name}' already exists.")
+            return
+        old_icon = os.path.join(self.icon_dir, f"{old_name}.png")
+        try:
+            os.rename(old_json, new_json)
+            if os.path.exists(old_icon):
+                # replace in case an old unused icon already has the new name
+                os.replace(old_icon, os.path.join(self.icon_dir, f"{new_name}.png"))
+        except OSError as e:
+            cmds.warning(f"Could not rename {old_name}: {e}")
+            return
+        self.refresh_buttons()
+        SaveNotification.show_message(f'Renamed {old_name} to {new_name}')
             
     def set_prefix(self, prefixname):
         self.prefix = prefixname
