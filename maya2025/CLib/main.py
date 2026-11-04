@@ -652,7 +652,6 @@ class ControlLibraryUI:
         self.ui.setObjectName(WINDOW_OBJECT_NAME)  # name the window so a reload can find the old one
         self.ui.setParent(master_window())
         # self.ui.setWindowFlags(self.ui.windowFlags() | Qt.WindowStaysOnTopHint)
-        self.ui.setParent(master_window())
         self.ui.setWindowFlags(Qt.Window)
         self.ui.setWindowIcon(QIcon(os.path.join(icon_dir, "ControlLib.png")))
         self.ui.resize(1000, 200)
@@ -1088,28 +1087,22 @@ class ControlLibraryUI:
         scroll_content.setMinimumHeight(500)
 
         # group box style setting
-        groupbox_widget.setStyleSheet("""
+        # title needs :: not : or qt skips it, and margin-top leaves room so the title sits on the border line
+        groupbox_style = """
             QGroupBox {
                 border: 1px solid white;
                 border-radius: 7px;
+                margin-top: 14px;
             }
-            QGroupBox:title {
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0px 4px;
                 font-size: 14px;
-                top: -1px;
             }
-        """)
-
-        # group box style setting
-        namesetting_widget.setStyleSheet("""
-            QGroupBox {
-                border: 1px solid white;
-                border-radius: 7px;
-            }
-            QGroupBox:title {
-                font-size: 14px;
-                top: -1px;
-            }
-        """)
+        """
+        groupbox_widget.setStyleSheet(groupbox_style)
+        namesetting_widget.setStyleSheet(groupbox_style)
         # radio button on by default
         color_radiobutton.setChecked(True)
 
@@ -1231,9 +1224,14 @@ class ControlLibraryUI:
         self.ui.show()
 
 
+MAYA_WINDOW = None
+
 def master_window():
-    master_window = omui.MQtUtil.mainWindow()
-    return wrapInstance(int(master_window), QWidget)
+    # hold on to the maya window, in 2027 a throwaway one takes the clib window down with it when it gets cleaned up
+    global MAYA_WINDOW
+    if MAYA_WINDOW is None:
+        MAYA_WINDOW = wrapInstance(int(omui.MQtUtil.mainWindow()), QWidget)
+    return MAYA_WINDOW
 
 
 WINDOW_OBJECT_NAME = "CLibControlStudio"
