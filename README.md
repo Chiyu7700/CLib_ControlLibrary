@@ -115,7 +115,7 @@ an offset/NPO group above it.
 > If you've already built a Control and decide it should be a different shape you can simply select it (or a bunch of them) and Ctrl+Click the shape you want in the library, or right click the shape and click *Replace Shape on Selected*. It only swaps out the curve so anything on the control itself like keys or constraints stays as it is, and it keeps its color and line width too. The new shape will use whatever scale and primary axis you currently have set, just note that anything connected directly to the old shape node won't carry over
 > > 
 . 
-![CLib_Replace_Shape]<img width="1200" height="514" alt="CLib_Replace_Shape" src="https://github.com/user-attachments/assets/e8179993-d44b-4e2c-b8ce-ce33840b3005" />
+![CLib_Replace_Shape](https://github.com/user-attachments/assets/e8179993-d44b-4e2c-b8ce-ce33840b3005)
 
 
 <br>
@@ -126,7 +126,8 @@ an offset/NPO group above it.
 > Select the controls you want to recolor and click one of the preset colors (or pick a custom one) and they'll all change at once. If nothing is selected it just sets the color for the next Control you create
 > > 
 . 
-![CLib_Recolor](Media/CLib_Recolor.gif)
+![CLib_Recolor]("https://github.com/user-attachments/assets/064c46aa-aaed-48a4-991a-1d68f38d3bdb)
+
 
 <br>
 
