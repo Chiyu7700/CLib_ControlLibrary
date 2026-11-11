@@ -126,7 +126,7 @@ an offset/NPO group above it.
 > Select the controls you want to recolor and click one of the preset colors (or pick a custom one) and they'll all change at once. If nothing is selected it just sets the color for the next Control you create
 > > 
 . 
-![CLib_Recolor]("https://github.com/user-attachments/assets/064c46aa-aaed-48a4-991a-1d68f38d3bdb)
+![CLib_Recolor](https://github.com/user-attachments/assets/064c46aa-aaed-48a4-991a-1d68f38d3bdb)
 
 
 <br>
