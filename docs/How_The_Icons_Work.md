@@ -2,7 +2,7 @@
 
 > "Would be cool to see if there's a way you can draw the shapes directly with QT and render them at runtime. Then you can also create icons for custom shapes too."
 >
-> Justin Pedersen, my Rigging lecturer at [The Animation School], 2025
+> Justin Pedersen - 2025
 
 That comment from Justin ( cool dude ) set me down a long train of thought.
 
@@ -12,7 +12,7 @@ That comment from Justin ( cool dude ) set me down a long train of thought.
 
 But it won't always be the same two axes. For example if a circle is flat on the ground, all its points have a Y value of 0. If I use X and Z I get the correct shape, but if I used X and Y every point would end up at the same height and I'd get a flat straight line.
 
-![Keeping X and Y vs keeping X and Z](Images/Icons_01_Drop_The_Axis.png)
+![Keeping X and Y vs keeping X and Z](https://github.com/user-attachments/assets/b8d1681f-67f2-4dfe-941c-f67bb84e030d)
 
 So to avoid this, the code first checks which axis the shape is thinnest on and uses the other two to create the icon. ( It sounds simple but I'm proud of it) This lets it handle curves in different orientations instead of trying to make everything work from one fixed camera.
 
