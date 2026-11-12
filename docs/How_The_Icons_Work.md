@@ -2,7 +2,7 @@
 
 > "Would be cool to see if there's a way you can draw the shapes directly with QT and render them at runtime. Then you can also create icons for custom shapes too."
 >
-> Justin Pedersen, my lecturer at [school], 2025
+> Justin Pedersen, my Rigging lecturer at [The Animation School], 2025
 
 That comment from Justin ( cool dude ) set me down a long train of thought.
 
