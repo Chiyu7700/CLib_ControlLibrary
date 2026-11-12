@@ -40,6 +40,8 @@ Enjoy
 
 My main objective was to create a tool that could help streamline the control/curve creation process when rigging in Maya. I tried my best to tailor the UI design and functionality of the tool towards simplicity and ease of use.
 
+The idea for CLib actually came from learning how to store and recall curves in JSON for my autorigger project, once I could save a curve I figured why not build a whole library around it.
+
 
 
 >  [!Note]
@@ -137,7 +139,7 @@ an offset/NPO group above it.
 
 more than just a Library I'd love this tool to be a Studio of some sorts, with ease of access to many control and curve creation/manipulation features while also keeping in mind UI real-estate. Currently my planned features are:
 
-* ~~Auto-generated icons for custom curves~~
+* ~~Auto-generated icons for custom curves~~ [thank you Justin!](docs/How_The_Icons_Work.md)
 > ~~Automatically create icons for shapes users save instead of simply resorting to a default icon~~
 
 * Overall improvements to the UI
