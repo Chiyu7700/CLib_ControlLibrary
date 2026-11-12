@@ -34,7 +34,7 @@ To find that axis the code measures how big the shape is on X, Y and Z ( basical
 
 ![The circle's extents](Images/Icons_03_Extents.png)
 
-I don't check for exactly 0 though, curves are rarely perfectly flat. Snap something slightly off or build it by hand and you'll end up with something like 0.00003 instead of 0, so anything smaller than 1% of the shape's biggest side counts as flat.
+> I don't check for exactly 0 though, curves are rarely perfectly flat. Snap something slightly off or build it by hand and you'll end up with something like 0.00003 instead of 0, so anything smaller than 1% of the shape's biggest side counts as flat.
 
 Depending on which axis is flat the code then looks at the shape from the top, the front or the side and keeps the two axes the shape actually has. ( Some of them flip Y with a minus sign because images count their pixels from the top down, without it every icon would come out upside down which would be a fun one to explain)
 
@@ -46,7 +46,7 @@ If none of the axes are flat, like the box or pyramid, looking at it straight on
 
 For these the code uses a 3/4 view instead, the same kind of angle as the hand made box and pyramid icons, the camera is turned 35 degrees around Y and tilted 25 degrees up.
 
-If you've ever set up an aim constraint this part should feel familiar. `cam` is the aim vector ( the direction we're looking from), `right` is the side vector and it's kept flat on the ground so the icon never ends up rolled to one side. `up` then gets worked out from `cam` and `right` so it sits at 90 degrees to both of them, the same way an aim constraint only uses world up as a hint and corrects it. If I just used world up (0, 1, 0) it wouldn't be at 90 degrees to the camera because the camera is tilted, and the icon would come out sheared.
+> Its kind of like setting up an Aim Constraint (so if you've done it before you'll be fine) . `cam` is the aim vector ( the direction we're looking from), `right` is the side vector and it's kept flat on the ground so the icon never ends up rolled to one side. `up` then gets worked out from `cam` and `right` so it sits at 90 degrees to both of them, the same way an aim constraint only uses world up as a hint and corrects it. If I just used world up (0, 1, 0) it wouldn't be at 90 degrees to the camera because the camera is tilted, and the icon would come out sheared.
 
 With those three every point gets measured against `right` ( how far across the icon it goes) and `up` ( how far up it goes) and whatever is left along `cam`, the depth, just gets thrown away. So it's pretty much an orthographic camera in a couple lines of code.
 
@@ -56,7 +56,7 @@ After all that the drawing could be any size, and a tiny finger control and a ma
 
 Then it moves the centre of the drawing to the centre of the icon and draws it in the same yellow and line thickness as the hand made icons so the stored ones don't stick out in the library.
 
-![Icons CLib drew by itself](Images/Icons_05_Results.png)
+![Icons CLib drew](Images/Icons_05_Results.png)
 
 There's also a tiny 0.0001 in there, that's only there so a curve where every point sits in the same spot doesn't make the code divide by zero. Very unlikely to happen but I'd rather not find out the hard way.
 
