@@ -8,7 +8,7 @@ That comment from Justin ( cool dude ) set me down a long train of thought.
 
 ## The Key Problem
 
-Users need custom icons for their custom shapes. An icon is typically a 2D, 100x100 image ( think two axes, like X and Y) but the curve exists in 3D space ( think three axes, X, Y and Z). To turn it into a 2D icon I need to project the 3D shape onto two axes and ignore the third one.
+>Users need custom icons for their custom shapes. An icon is typically a 2D, 100x100 image ( think two axes, like X and Y) but the curve exists in 3D space ( think three axes, X, Y and Z). To turn it into a 2D icon I need to project the 3D shape onto two axes and ignore the third one.
 
 But it won't always be the same two axes. For example if a circle is flat on the ground, all its points have a Y value of 0. If I use X and Z I get the correct shape, but if I used X and Y every point would end up at the same height and I'd get a flat straight line.
 
