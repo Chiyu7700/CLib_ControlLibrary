@@ -62,11 +62,12 @@ There's also a tiny 0.0001 in there, that's only there so a curve where every po
 
 ## The Kryptonite Section
 
-Every tool has one and this is CLib's. A flat shape that's tilted, say a circle rotated 45 degrees, has size on all three axes so it doesn't get caught as flat and gets the 3/4 view instead, so it comes out looking like an oval. Fixing that would mean finding the plane the shape actually sits on rather than just checking X, Y and Z, which is a bigger job than it sounds.
+> Damn we were almost perfect. 
+A flat shape that's tilted (say a circle rotated 45 degrees), has size on all three axes so it doesn't get caught as flat and gets the 3/4 view instead, so it comes out looking like an oval. Fixing that would mean finding the plane the shape actually sits on rather than just checking X, Y and Z, which is a bigger job than it sounds. ( believe me I tried, I am open to suggestions though )
 
-Really busy shapes can also get a bit muddy at 100 pixels, but if a shape is that busy it's probably too busy to be a control anyway.
+Really busy shapes can also get a bit muddy at 100 pixels, but if a shape is that busy it's probably too busy to be a control anyway. ( I'm just saying )
 
-So thanks Justin, that one comment turned into a lot more maths than I expected.
+> So thanks Justin, that one comment turned into a lot more maths than I expected.
 
 ---
 
